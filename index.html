@@ -6,64 +6,115 @@
   <title>오늘의 날씨</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gradient-to-b from-blue-100 to-white min-h-screen flex items-center justify-center px-4">
+<body class="bg-gradient-to-b from-blue-100 to-white min-h-screen flex flex-col items-center justify-start px-4 py-10 space-y-8">
+
+  <!-- 오늘 날씨 카드 -->
   <div class="bg-white p-6 rounded-2xl shadow-xl max-w-sm w-full text-center">
     <h2 class="text-2xl font-bold text-gray-800 mb-4">오늘의 날씨</h2>
-    <div id="weather" class="text-gray-700 text-base">
-      위치 정보를 가져오는 중…
-    </div>
+    <div id="today" class="text-gray-700 text-base">위치 정보를 가져오는 중…</div>
+  </div>
+
+  <!-- 내일 날씨 카드 -->
+  <div class="bg-white p-6 rounded-2xl shadow-xl max-w-sm w-full text-center">
+    <h2 class="text-xl font-semibold text-gray-800 mb-4">내일의 날씨</h2>
+    <div id="tomorrow" class="text-gray-700 text-base">날씨 데이터를 불러오는 중…</div>
   </div>
 
   <script>
     const API_KEY = '8f2523019426e1bebc6ea6593faea845';
 
+    function formatTemp(t) {
+      return t.toFixed(1);
+    }
+
     async function fetchWeather(lat, lon) {
       try {
-        const weatherRes = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&lang=kr&appid=${API_KEY}`);
-        const weather = await weatherRes.json();
+        // 현재 날씨
+        const nowRes = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&lang=kr&appid=${API_KEY}`);
+        const nowData = await nowRes.json();
+        const location = nowData.name;
 
-        const temp = Math.round(weather.main.temp);
-        const tempMin = Math.round(weather.main.temp_min);
-        const tempMax = Math.round(weather.main.temp_max);
-        const desc = weather.weather[0].description;
-        const location = weather.name;
-
+        // 미세먼지
         const dustRes = await fetch(`https://api.openweathermap.org/data/2.5/air_pollution?lat=${lat}&lon=${lon}&appid=${API_KEY}`);
         const dust = await dustRes.json();
         const pm10 = Math.round(dust.list[0].components.pm10);
-
         let dustLevel = '좋음';
         if (pm10 > 80) dustLevel = '나쁨';
         else if (pm10 > 30) dustLevel = '보통';
 
-        document.getElementById('weather').innerHTML = `
+        // 예보 데이터
+        const forecastRes = await fetch(`https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&units=metric&lang=kr&appid=${API_KEY}`);
+        const forecast = await forecastRes.json();
+
+        const today = new Date().toISOString().split('T')[0];
+        const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0];
+
+        let todayTemps = [];
+        let tomorrowTemps = [];
+        let tomorrowDescriptions = [];
+
+        forecast.list.forEach(entry => {
+          const date = entry.dt_txt.split(' ')[0];
+          const temp = entry.main.temp;
+          if (date === today) todayTemps.push(temp);
+          if (date === tomorrow) {
+            tomorrowTemps.push(temp);
+            tomorrowDescriptions.push(entry.weather[0].description);
+          }
+        });
+
+        const todayMin = Math.min(...todayTemps);
+        const todayMax = Math.max(...todayTemps);
+
+        const tomorrowMin = Math.min(...tomorrowTemps);
+        const tomorrowMax = Math.max(...tomorrowTemps);
+        const mostCommonDesc = getMostFrequent(tomorrowDescriptions);
+
+        // 오늘 표시
+        document.getElementById('today').innerHTML = `
           <p class="text-lg font-semibold">${location}</p>
-          <p class="mt-2 text-3xl font-bold text-blue-600">${temp}°C</p>
-          <p class="text-sm text-gray-500">최저 ${tempMin}° / 최고 ${tempMax}°</p>
-          <p class="mt-2 text-base">🌤️ ${desc}</p>
+          <p class="mt-2 text-3xl font-bold text-blue-600">${formatTemp(nowData.main.temp)}°C</p>
+          <p class="text-sm text-gray-500">최저 ${formatTemp(todayMin)}° / 최고 ${formatTemp(todayMax)}°</p>
+          <p class="mt-2 text-base">🌤️ ${nowData.weather[0].description}</p>
           <p class="mt-1 text-sm text-gray-600">미세먼지(PM10): ${pm10}㎍/㎥ <span class="font-semibold">(${dustLevel})</span></p>
         `;
+
+        // 내일 표시
+        document.getElementById('tomorrow').innerHTML = `
+          <p class="text-lg font-semibold">예상 기온</p>
+          <p class="mt-2 text-2xl font-bold text-orange-500">${formatTemp(tomorrowMin)}° / ${formatTemp(tomorrowMax)}°</p>
+          <p class="mt-2 text-base">☁️ ${mostCommonDesc}</p>
+        `;
+
       } catch (e) {
         console.error(e);
-        document.getElementById('weather').innerHTML = `<p class="text-red-600">날씨 정보를 불러오지 못했습니다.</p>`;
+        document.getElementById('today').innerHTML = `<p class="text-red-600">날씨 정보를 불러오지 못했습니다.</p>`;
       }
+    }
+
+    function getMostFrequent(arr) {
+      const count = {};
+      let max = 0, result = '';
+      arr.forEach(val => {
+        count[val] = (count[val] || 0) + 1;
+        if (count[val] > max) {
+          max = count[val];
+          result = val;
+        }
+      });
+      return result;
     }
 
     function getLocationAndFetch() {
       if (!navigator.geolocation) {
-        document.getElementById('weather').innerText = '이 브라우저는 위치 정보 지원이 안 됩니다.';
+        document.getElementById('today').innerText = '이 브라우저는 위치 정보 지원이 안 됩니다.';
         return;
       }
-
       navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const lat = position.coords.latitude;
-          const lon = position.coords.longitude;
-          fetchWeather(lat, lon);
-        },
-        (error) => {
-          console.error(error);
-          document.getElementById('weather').innerText = '위치 정보를 가져올 수 없습니다.';
+        pos => fetchWeather(pos.coords.latitude, pos.coords.longitude),
+        err => {
+          console.error(err);
+          document.getElementById('today').innerText = '위치 정보를 가져올 수 없습니다.';
         }
       );
     }
