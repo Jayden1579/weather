@@ -23,7 +23,7 @@
   <!-- 주간 날씨 -->
   <div class="bg-white rounded-2xl shadow-xl p-4 max-w-md mx-auto">
     <h2 class="text-xl font-semibold mb-3">주간 날씨</h2>
-    <div id="weekly" class="flex justify-between overflow-x-auto gap-2 text-sm text-gray-600"></div>
+    <div id="weekly" class="flex overflow-x-auto gap-2 text-sm text-gray-600 px-1 pb-2"></div>
   </div>
 
   <script>
@@ -54,7 +54,7 @@
       }
 
       function getMinMax(entries) {
-        let temps = entries.map(e => e.main.temp);
+        const temps = entries.map(e => e.main.temp);
         return [Math.min(...temps), Math.max(...temps)];
       }
 
@@ -73,7 +73,7 @@
         <p class="text-lg font-semibold">${now.name}</p>
         <p class="mt-2 text-3xl font-bold text-blue-600">${tempNow}°C</p>
         <p class="text-sm text-gray-500">최저 ${todayMin.toFixed(1)}° / 최고 ${todayMax.toFixed(1)}°</p>
-        <p class="mt-2">🌤️ ${now.weather[0].description}</p>
+        <p class="mt-2">${getWeatherEmoji(now.weather[0].main)} ${now.weather[0].description}</p>
         <p class="text-sm text-gray-600 mt-1">미세먼지(PM10): ${pm10}㎍/㎥ (${dustLevel})</p>
       `;
 
@@ -87,10 +87,10 @@
         <p class="text-sm text-gray-500 mt-2">최저 ${tomorrowMin.toFixed(1)}° / 최고 ${tomorrowMax.toFixed(1)}°</p>
       `;
 
-      // 주간 요약 (3~9일 후 → index 2~7 → 총 6일치)
+      // 주간 요약 (3~9일 후)
       const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
       const weeklyDiv = document.getElementById('weekly');
-      const dayKeys = Object.keys(dailyData).slice(2, 8); // index 2~7 (6개)
+      const dayKeys = Object.keys(dailyData).slice(2, 8); // 총 6일
 
       dayKeys.forEach(dateStr => {
         const baseDate = new Date(dateStr);
@@ -100,10 +100,10 @@
         const emoji = getWeatherEmoji(icon);
 
         weeklyDiv.innerHTML += `
-          <div class="flex-shrink-0 w-14 bg-white rounded-xl shadow p-2 text-center">
-            <p class="text-sm">${day}</p>
+          <div class="flex-shrink-0 w-12 bg-white rounded-xl shadow p-2 text-center">
+            <p class="text-[11px]">${day}</p>
             <p class="text-xl">${emoji}</p>
-            <p class="text-sm text-black font-semibold">${Math.round(max)}°</p>
+            <p class="text-xs text-black font-semibold">${Math.round(max)}°</p>
           </div>
         `;
       });
