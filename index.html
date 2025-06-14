@@ -19,33 +19,30 @@
       border-radius: 12px;
       box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
       text-align: center;
+      max-width: 300px;
     }
   </style>
 </head>
 <body>
   <div class="box">
     <h2>오늘의 날씨</h2>
-    <div id="weather">불러오는 중...</div>
+    <div id="weather">위치 정보를 가져오는 중...</div>
   </div>
 
   <script>
     const API_KEY = '8f2523019426e1bebc6ea6593faea845';
-    const city = 'Seoul';
 
-    async function loadWeather() {
+    async function fetchWeather(lat, lon) {
       try {
-        // 현재 날씨 데이터
-        const weatherRes = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&lang=kr&appid=${API_KEY}`);
+        const weatherRes = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&lang=kr&appid=${API_KEY}`);
         const weather = await weatherRes.json();
 
         const temp = weather.main.temp;
         const tempMin = weather.main.temp_min;
         const tempMax = weather.main.temp_max;
         const desc = weather.weather[0].description;
-        const lat = weather.coord.lat;
-        const lon = weather.coord.lon;
+        const location = weather.name;
 
-        // 미세먼지 데이터
         const dustRes = await fetch(`https://api.openweathermap.org/data/2.5/air_pollution?lat=${lat}&lon=${lon}&appid=${API_KEY}`);
         const dust = await dustRes.json();
         const pm10 = dust.list[0].components.pm10;
@@ -55,18 +52,38 @@
         else if (pm10 > 30) dustLevel = '보통';
 
         document.getElementById('weather').innerHTML = `
+          <p><strong>${location}</strong> 기준</p>
           <p>현재 기온: ${temp}°C</p>
           <p>최저 / 최고: ${tempMin}°C / ${tempMax}°C</p>
           <p>날씨: ${desc}</p>
           <p>미세먼지: ${pm10}㎍/㎥ (${dustLevel})</p>
         `;
       } catch (e) {
-        document.getElementById('weather').innerText = '날씨 정보를 불러오지 못했습니다.';
         console.error(e);
+        document.getElementById('weather').innerText = '날씨 정보를 불러오지 못했습니다.';
       }
     }
 
-    loadWeather();
+    function getLocationAndFetch() {
+      if (!navigator.geolocation) {
+        document.getElementById('weather').innerText = '이 브라우저는 위치 정보 지원이 안 됩니다.';
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const lat = position.coords.latitude;
+          const lon = position.coords.longitude;
+          fetchWeather(lat, lon);
+        },
+        (error) => {
+          console.error(error);
+          document.getElementById('weather').innerText = '위치 정보를 가져올 수 없습니다.';
+        }
+      );
+    }
+
+    getLocationAndFetch();
   </script>
 </body>
 </html>
