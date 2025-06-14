@@ -20,9 +20,9 @@
     <div id="tomorrow" class="text-gray-700">로딩 중…</div>
   </div>
 
-  <!-- 이번 주 날씨 -->
+  <!-- 주간 날씨 -->
   <div class="bg-white rounded-2xl shadow-xl p-4 max-w-md mx-auto">
-    <h2 class="text-xl font-semibold mb-3">주간 날씨 (3~7일 후)</h2>
+    <h2 class="text-xl font-semibold mb-3">주간 날씨</h2>
     <div id="weekly" class="flex justify-between overflow-x-auto gap-2 text-sm text-gray-600"></div>
   </div>
 
@@ -58,6 +58,14 @@
         return [Math.min(...temps), Math.max(...temps)];
       }
 
+      function getWeatherEmoji(desc) {
+        const d = desc.toLowerCase();
+        if (d.includes('rain')) return '🌧️';
+        if (d.includes('cloud')) return '🌥️';
+        if (d.includes('clear')) return '☀️';
+        return '☁️';
+      }
+
       // 오늘
       const [todayMin, todayMax] = getMinMax(dailyData[today]);
       const tempNow = now.main.temp.toFixed(1);
@@ -73,32 +81,29 @@
       const [tomorrowMin, tomorrowMax] = getMinMax(dailyData[tomorrow]);
       const diff = Math.round(tomorrowMax - todayMax);
       const sign = diff >= 0 ? '+' : '';
+      const tomorrowEmoji = getWeatherEmoji(dailyData[tomorrow][0].weather[0].main);
       document.getElementById('tomorrow').innerHTML = `
-        <p class="text-3xl font-bold text-orange-500">${sign}${diff}°C</p>
+        <p class="text-3xl font-bold text-orange-500">${tomorrowEmoji} ${sign}${diff}°C</p>
         <p class="text-sm text-gray-500 mt-2">최저 ${tomorrowMin.toFixed(1)}° / 최고 ${tomorrowMax.toFixed(1)}°</p>
       `;
 
-      // 주간 요약 (3~7일 후)
+      // 주간 요약 (3~9일 후 → index 2~7 → 총 6일치)
       const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
       const weeklyDiv = document.getElementById('weekly');
-      const todayIdx = new Date().getDay();
+      const dayKeys = Object.keys(dailyData).slice(2, 8); // index 2~7 (6개)
 
-      const dayKeys = Object.keys(dailyData).slice(2, 7); // 오늘(0), 내일(1) 제외
-      dayKeys.forEach((dateStr) => {
+      dayKeys.forEach(dateStr => {
         const baseDate = new Date(dateStr);
         const day = weekdays[baseDate.getDay()];
         const [ , max ] = getMinMax(dailyData[dateStr]);
         const icon = dailyData[dateStr][0].weather[0].main;
-        let emoji = '☁️';
-        if (icon.includes('Rain')) emoji = '🌧️';
-        else if (icon.includes('Clear')) emoji = '☀️';
-        else if (icon.includes('Cloud')) emoji = '🌥️';
+        const emoji = getWeatherEmoji(icon);
 
         weeklyDiv.innerHTML += `
           <div class="flex-shrink-0 w-14 bg-white rounded-xl shadow p-2 text-center">
             <p class="text-sm">${day}</p>
             <p class="text-xl">${emoji}</p>
-            <p class="text-sm text-black-700 font-semibold">${Math.round(max)}°</p>
+            <p class="text-sm text-black font-semibold">${Math.round(max)}°</p>
           </div>
         `;
       });
