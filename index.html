@@ -21,9 +21,9 @@
   </div>
 
   <!-- 주간 날씨 -->
-  <div class="bg-white rounded-2xl shadow-xl p-4 max-w-md mx-auto">
+  <div class="bg-white rounded-2xl shadow-xl p-4 max-w-xl mx-auto">
     <h2 class="text-xl font-semibold mb-3">주간 날씨</h2>
-    <div id="weekly" class="flex overflow-x-auto gap-2 text-sm text-gray-600 px-1 pb-2"></div>
+    <div id="weekly" class="flex justify-center gap-3 text-sm text-gray-600"></div>
   </div>
 
   <script>
@@ -87,10 +87,10 @@
         <p class="text-sm text-gray-500 mt-2">최저 ${tomorrowMin.toFixed(1)}° / 최고 ${tomorrowMax.toFixed(1)}°</p>
       `;
 
-      // 주간 요약 (3~9일 후)
+      // 주간 요약 (3~7일 후 → index 2~6 → 5개)
       const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
       const weeklyDiv = document.getElementById('weekly');
-      const dayKeys = Object.keys(dailyData).slice(2, 8); // 총 6일
+      const dayKeys = Object.keys(dailyData).slice(2, 7); // 총 5개
 
       dayKeys.forEach(dateStr => {
         const baseDate = new Date(dateStr);
@@ -100,10 +100,10 @@
         const emoji = getWeatherEmoji(icon);
 
         weeklyDiv.innerHTML += `
-          <div class="flex-shrink-0 w-12 bg-white rounded-xl shadow p-2 text-center">
-            <p class="text-[11px]">${day}</p>
+          <div class="flex-shrink-0 w-14 bg-white rounded-xl shadow p-2 text-center">
+            <p class="text-[12px]">${day}</p>
             <p class="text-xl">${emoji}</p>
-            <p class="text-xs text-black font-semibold">${Math.round(max)}°</p>
+            <p class="text-sm text-black font-semibold">${Math.round(max)}°</p>
           </div>
         `;
       });
