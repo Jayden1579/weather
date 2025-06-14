@@ -22,7 +22,7 @@
 
   <!-- 이번 주 날씨 -->
   <div class="bg-white rounded-2xl shadow-xl p-4 max-w-md mx-auto">
-    <h2 class="text-xl font-semibold mb-3">이번 주 날씨</h2>
+    <h2 class="text-xl font-semibold mb-3">주간 날씨 (3~7일 후)</h2>
     <div id="weekly" class="flex justify-between overflow-x-auto gap-2 text-sm text-gray-600"></div>
   </div>
 
@@ -78,14 +78,15 @@
         <p class="text-sm text-gray-500 mt-2">최저 ${tomorrowMin.toFixed(1)}° / 최고 ${tomorrowMax.toFixed(1)}°</p>
       `;
 
-      // 주간 요약 (오늘부터 7일)
+      // 주간 요약 (3~7일 후)
       const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
       const weeklyDiv = document.getElementById('weekly');
       const todayIdx = new Date().getDay();
 
-      const dayKeys = Object.keys(dailyData).slice(0, 7); // 최대 7일
-      dayKeys.forEach((dateStr, idx) => {
-        const day = weekdays[(todayIdx + idx) % 7];
+      const dayKeys = Object.keys(dailyData).slice(2, 7); // 오늘(0), 내일(1) 제외
+      dayKeys.forEach((dateStr) => {
+        const baseDate = new Date(dateStr);
+        const day = weekdays[baseDate.getDay()];
         const [ , max ] = getMinMax(dailyData[dateStr]);
         const icon = dailyData[dateStr][0].weather[0].main;
         let emoji = '☁️';
