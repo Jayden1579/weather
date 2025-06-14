@@ -22,15 +22,15 @@
         const weatherRes = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&lang=kr&appid=${API_KEY}`);
         const weather = await weatherRes.json();
 
-        const temp = weather.main.temp;
-        const tempMin = weather.main.temp_min;
-        const tempMax = weather.main.temp_max;
+        const temp = Math.round(weather.main.temp);
+        const tempMin = Math.round(weather.main.temp_min);
+        const tempMax = Math.round(weather.main.temp_max);
         const desc = weather.weather[0].description;
         const location = weather.name;
 
         const dustRes = await fetch(`https://api.openweathermap.org/data/2.5/air_pollution?lat=${lat}&lon=${lon}&appid=${API_KEY}`);
         const dust = await dustRes.json();
-        const pm10 = dust.list[0].components.pm10;
+        cconst pm10 = Math.round(dust.list[0].components.pm10);
 
         let dustLevel = '좋음';
         if (pm10 > 80) dustLevel = '나쁨';
